@@ -1,8 +1,18 @@
-from datetime import datetime, timedelta
 import re
+import os
+from datetime import datetime, timedelta
+from time import sleep
 
 from flask import Flask, request, make_response
+from flask_rq2 import RQ
 from twilio.twiml.messaging_response import MessagingResponse
+from twilio.rest import Client
+
+account_sid = os.environ.get('TWILIO_SID')
+auth_token = os.environ.get('TWILIO_AUTH')
+
+client = Client(account_sid, auth_token)
+
 
 class Cookies():
     FIRST_TIME = 'first_time'
@@ -13,6 +23,7 @@ class Cookies():
     BIRTHDAY = 'birthday'
 
 app = Flask(__name__)
+rq = RQ(app)
 
 @app.route("/sms", methods=['GET', 'POST'])
 def sms():
@@ -29,18 +40,36 @@ def sms():
     if stage == 1:
         return opt_in()
 
-    return setup_account(stage)
+    print(stage)
+    if stage < 5:
+        return setup_account(stage)
+
+    if stage < 8:
+        return a_game(stage)
 
 def first_time_response():
-    message = '''
-    Welcome to  Sesame Seeds, powered by Vroom.
+    message1 = 'Welcome to  Sesame Seeds, powered by Vroom.'
+    message2 = 'This is a proof-of-concept demonstration to show the kinds of experiences families will share in Jordan, Lebanon, Iraq and Syria. We are not collecting any data and you can opt-out of messages at any time by texting ‘stop’.'
+    message3 = 'In this demo, you will play the part of a caregiver of a child under the age of 6. Respond OK when ready.'
+    from_num = request.form['To']
+    to_num = request.form['From']
 
-    This is a proof-of-concept demonstration to show the kinds of experiences families will share in Jordan, Lebanon, Iraq and Syria. We are not collecting any data and you can opt-out of messages at any time by texting ‘stop’.
+    client.messages.create(
+        to=to_num,
+        from_=from_num,
+        body=message1,
+    )
+    sleep(1.5)
 
-    In this demo, you will play the part of a caregiver of a child under the age of 6. Respond OK when ready.
-    '''
     twilio_resp = MessagingResponse()
-    twilio_resp.message(message)
+    client.messages.create(
+        to=to_num,
+        from_=from_num,
+        body=message2,
+    )
+    sleep(1.5)
+
+    twilio_resp.message(message3)
 
     resp = make_response(str(twilio_resp))
     resp.set_cookie(Cookies.FIRST_TIME, str(False))
@@ -53,11 +82,21 @@ def opt_in():
     if user_response not in ['ok', 'yes']:
         return opt_out()
 
-    message = 'اَلسَّلَامُ عَلَيْكُ! You have what it takes to nurture a young child’s brain. \
-    Let’s get started. First, what’s your child’s name?'
+    message1 = 'اَلسَّلَامُ عَلَيْكُ! You have what it takes to nurture a young child’s brain.'
+    message2 = 'Let’s get started. First, what’s your child’s name?'
+
+    from_num = request.form['To']
+    to_num = request.form['From']
+    client.messages.create(
+        to=to_num,
+        from_=from_num,
+        body=message1,
+    )
+    sleep(1.5)
+
 
     twilio_resp = MessagingResponse()
-    twilio_resp.message(message)
+    twilio_resp.message(message2)
 
     resp = make_response(str(twilio_resp))
     resp.set_cookie(Cookies.STAGE, str(2))
@@ -75,7 +114,6 @@ def opt_out():
     resp.set_cookie(Cookies.OPT_IN, str(False))
 
     return resp
-
 
 def setup_account(stage):
     if stage == 2: # Ask gender
@@ -137,3 +175,70 @@ def check_birthday(birthday):
     if birthday_date.date() == datetime.today().date():
         return 'Happy Birthday!\n'
     return ''
+
+
+def a_game(stage):
+    name = request.cookies.get(Cookies.NAME)
+    if stage == 5: # Intro game
+        now = datetime.now().strftime('%A, %B %dth')
+        message = 'It’s {}. Time for today’s game! Today, we’ll do Hide and Seek, which is great for children like {}. Text “OK” to get started.'.format(now, name)
+        twilio_resp = MessagingResponse()
+        twilio_resp.message(message)
+
+        resp = make_response(str(twilio_resp))
+        resp.set_cookie(Cookies.STAGE, str(6))
+        return resp
+    if stage == 6: # Confirm start
+        response = request.form['Body']
+        if response.lower() != 'ok':
+            message = 'No worries! Text back later when you\'re ready'
+            twilio_resp = MessagingResponse()
+            twilio_resp.message(message)
+
+            resp = make_response(str(twilio_resp))
+            resp.set_cookie(Cookies.STAGE, str(5))
+            return resp
+
+        from_num = request.form['To']
+        to_num = request.form['From']
+        name = request.cookies.get(Cookies.NAME)
+        message1 = 'This one is simple, but teaches object permanence. Cover your face with a cloth and then…'
+        message2 = 'Let us know when you finish the activity! Did {} like the activity? Text ‘yes’ or ‘no”'.format(name)
+        client.messages.create(
+            to=to_num,
+            from_=from_num,
+            body=message1,
+        )
+        sleep(1.5)
+        client.messages.create(
+            to=to_num,
+            from_=from_num,
+            body='https://link.to/media_asset',
+            # media_url='https://link.to/media_asset', TODO
+        )
+        sleep(1.5)
+        twilio_resp = MessagingResponse()
+        twilio_resp.message(message2)
+
+        resp = make_response(str(twilio_resp))
+        resp.set_cookie(Cookies.STAGE, str(7))
+        return resp
+    if stage == 7:
+        response = request.form['Body']
+        twilio_resp = MessagingResponse()
+        if response.lower() == 'yes':
+            twilio_resp.message('Great! We’ll send you more like this.')
+        else:
+            twilio_resp.message('Sorry to hear it! Maybe {} will like the next one better'.format(name))
+
+        resp = make_response(str(twilio_resp))
+        resp.set_cookie(Cookies.STAGE, str(8))
+        return resp
+
+def b_game(to, first=False):
+    pass
+
+
+@rq.job
+def schedule_b_game(to_number):
+    b_game(to_number, True)
