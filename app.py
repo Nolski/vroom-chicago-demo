@@ -1,10 +1,11 @@
 import re
 import os
+import asyncio
 from datetime import datetime, timedelta
+from threading import Thread
 from time import sleep
 
 from flask import Flask, request, make_response
-from flask_rq2 import RQ
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
 
@@ -13,6 +14,12 @@ auth_token = os.environ.get('TWILIO_AUTH')
 
 client = Client(account_sid, auth_token)
 
+def start_loop(loop):
+    asyncio.set_event_loop(loop)
+    loop.run_forever()
+new_loop = asyncio.new_event_loop()
+t = Thread(target=start_loop, args=(new_loop,))
+t.start()
 
 class Cookies():
     FIRST_TIME = 'first_time'
@@ -23,15 +30,14 @@ class Cookies():
     BIRTHDAY = 'birthday'
 
 app = Flask(__name__)
-rq = RQ(app)
 
 @app.route("/sms", methods=['GET', 'POST'])
 def sms():
     first_time = request.cookies.get(Cookies.FIRST_TIME) != 'False'
     stage = int(request.cookies.get(Cookies.STAGE, 0))
-    body = request.form['Body'].lower()
+    body = request.form['Body'].lower().strip()
 
-    if body is 'pineapple':
+    if body == 'pineapple':
         return opt_out()
 
     if first_time:
@@ -44,8 +50,10 @@ def sms():
     if stage < 5:
         return setup_account(stage)
 
-    if stage < 8:
+    if stage < 9:
         return a_game(stage)
+
+    return b_game(None, False, stage)
 
 def first_time_response():
     message1 = 'Welcome to  Sesame Seeds, powered by Vroom.'
@@ -177,8 +185,11 @@ def check_birthday(birthday):
     return ''
 
 
+
 def a_game(stage):
     name = request.cookies.get(Cookies.NAME)
+    from_num = request.form['To']
+    to_num = request.form['From']
     if stage == 5: # Intro game
         now = datetime.now().strftime('%A, %B %dth')
         message = 'It’s {}. Time for today’s game! Today, we’ll do Hide and Seek, which is great for children like {}. Text “OK” to get started.'.format(now, name)
@@ -199,8 +210,6 @@ def a_game(stage):
             resp.set_cookie(Cookies.STAGE, str(5))
             return resp
 
-        from_num = request.form['To']
-        to_num = request.form['From']
         name = request.cookies.get(Cookies.NAME)
         message1 = 'This one is simple, but teaches object permanence. Cover your face with a cloth and then…'
         message2 = 'Let us know when you finish the activity! Did {} like the activity? Text ‘yes’ or ‘no”'.format(name)
@@ -223,7 +232,7 @@ def a_game(stage):
         resp = make_response(str(twilio_resp))
         resp.set_cookie(Cookies.STAGE, str(7))
         return resp
-    if stage == 7:
+    if stage == 7 or stage == 8:
         response = request.form['Body']
         twilio_resp = MessagingResponse()
         if response.lower() == 'yes':
@@ -233,12 +242,19 @@ def a_game(stage):
 
         resp = make_response(str(twilio_resp))
         resp.set_cookie(Cookies.STAGE, str(8))
+        new_loop.call_soon_threadsafe(b_game, stage, to_num, from_num, name, 30)
         return resp
 
-def b_game(to, first=False):
+def b_game(stage, to_num='', from_num='', name='', time=0):
+    now = datetime.now().strftime('%A, %B %dth')
+    if stage == 8:
+        sleep(time)
+        message = 'It’s {}th. Time for today’s game! Today, we’ll do 1-2-3 Jump, which is great for children like {}. Text “OK” to get started'.format(now, name)
+        client.messages.create(
+            to=to_num,
+            from_=from_num,
+            body=message,
+        )
+        return
     pass
 
-
-@rq.job
-def schedule_b_game(to_number):
-    b_game(to_number, True)
