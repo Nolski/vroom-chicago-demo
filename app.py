@@ -46,12 +46,14 @@ def sms():
     if stage == 1:
         return opt_in()
 
-    print(stage)
     if stage < 5:
         return setup_account(stage)
 
     if stage < 9:
         return a_game(stage)
+
+    if stage < 11:
+        return b_game(stage)
 
     return b_game(None, False, stage)
 
@@ -241,12 +243,13 @@ def a_game(stage):
             twilio_resp.message('Sorry to hear it! Maybe {} will like the next one better'.format(name))
 
         resp = make_response(str(twilio_resp))
-        resp.set_cookie(Cookies.STAGE, str(8))
+        resp.set_cookie(Cookies.STAGE, str(9))
         new_loop.call_soon_threadsafe(b_game, stage, to_num, from_num, name, 30)
         return resp
 
 def b_game(stage, to_num='', from_num='', name='', time=0):
     now = datetime.now().strftime('%A, %B %dth')
+    print('stage', stage)
     if stage == 8:
         sleep(time)
         message = 'It’s {}th. Time for today’s game! Today, we’ll do 1-2-3 Jump, which is great for children like {}. Text “OK” to get started'.format(now, name)
@@ -256,5 +259,43 @@ def b_game(stage, to_num='', from_num='', name='', time=0):
             body=message,
         )
         return
-    pass
+    name = request.cookies.get(Cookies.NAME)
+    from_num = request.form['To']
+    to_num = request.form['From']
+    if stage == 9:
+        message1 = 'This one is simple, but teaches executive function. Watch this video and give it a try!'
+        message3 = 'Let us know when you finish the activity! Did {} like the activity? Text ‘yes’ or ‘no”'.format(name)
+        client.messages.create(
+            to=to_num,
+            from_=from_num,
+            body=message1,
+        )
+        sleep(1.5)
+        client.messages.create(
+            to=to_num,
+            from_=from_num,
+            body='https://link.to/media_asset',
+            # media_url='https://link.to/media_asset', TODO
+        )
+        sleep(1.5)
+        twilio_resp = MessagingResponse()
+        twilio_resp.message(message3)
 
+        resp = make_response(str(twilio_resp))
+        resp.set_cookie(Cookies.STAGE, str(10))
+        return resp
+    if stage == 10:
+        response = request.form['Body']
+        twilio_resp = MessagingResponse()
+        if response.lower() == 'yes':
+            twilio_resp.message('Great! We’ll send you more like this.')
+        else:
+            twilio_resp.message('Sorry to hear it! Maybe {} will like the next one better'.format(name))
+
+        resp = make_response(str(twilio_resp))
+        resp.set_cookie(Cookies.STAGE, str(9))
+        new_loop.call_soon_threadsafe(c_game, stage, to_num, from_num, name, 30)
+        return resp
+
+def c_game(stage, to_num='', from_num='', name='', time=0):
+    print('c game')
