@@ -66,6 +66,14 @@ def sms():
     if stage == 15:
         return e_game(stage)
 
+    end()
+    twilio_resp = MessagingResponse()
+    resp = make_response(str(twilio_resp))
+    resp.set_cookie(Cookies.STAGE, str(0))
+    resp.set_cookie(Cookies.FIRST_TIME, str(True))
+    return resp
+
+
 def first_time_response():
     message1 = 'Welcome to  Sesame Seeds, powered by Vroom.'
     message2 = 'This is a proof-of-concept demonstration to show the kinds of experiences families will share in Jordan, Lebanon, Iraq and Syria. We are not collecting any data and you can opt-out of messages at any time by texting ‘stop’.'
