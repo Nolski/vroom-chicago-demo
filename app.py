@@ -36,6 +36,11 @@ def sms():
     first_time = request.cookies.get(Cookies.FIRST_TIME) != 'False'
     stage = int(request.cookies.get(Cookies.STAGE, 0))
     body = request.form['Body'].lower().strip()
+    from_num = request.form['To']
+    to_num = request.form['From']
+    print('STAGE -------- ', stage)
+    if stage == 13 or stage == 14:
+        stage = 12
 
     if body == 'pineapple':
         return opt_out()
@@ -55,7 +60,11 @@ def sms():
     if stage < 11:
         return b_game(stage)
 
-    return b_game(None, False, stage)
+    if stage < 13:
+        return c_game(stage)
+
+    if stage == 15:
+        return e_game(stage)
 
 def first_time_response():
     message1 = 'Welcome to  Sesame Seeds, powered by Vroom.'
@@ -224,8 +233,8 @@ def a_game(stage):
         client.messages.create(
             to=to_num,
             from_=from_num,
-            body='https://link.to/media_asset',
-            # media_url='https://link.to/media_asset', TODO
+            body='https://s3.amazonaws.com/vroom-chicago-demo/hideandseek_lower.mp4',
+            # media_url='https://s3.amazonaws.com/vroom-chicago-demo/hideandseek_lower.mp4',
         )
         sleep(1.5)
         twilio_resp = MessagingResponse()
@@ -249,7 +258,6 @@ def a_game(stage):
 
 def b_game(stage, to_num='', from_num='', name='', time=0):
     now = datetime.now().strftime('%A, %B %dth')
-    print('stage', stage)
     if stage == 8:
         sleep(time)
         message = 'It’s {}th. Time for today’s game! Today, we’ll do 1-2-3 Jump, which is great for children like {}. Text “OK” to get started'.format(now, name)
@@ -274,8 +282,8 @@ def b_game(stage, to_num='', from_num='', name='', time=0):
         client.messages.create(
             to=to_num,
             from_=from_num,
-            body='https://link.to/media_asset',
-            # media_url='https://link.to/media_asset', TODO
+            body='https://s3.amazonaws.com/vroom-chicago-demo/123jump.mp4',
+            # media_url='https://s3.amazonaws.com/vroom-chicago-demo/123jump.mp4',
         )
         sleep(1.5)
         twilio_resp = MessagingResponse()
@@ -293,9 +301,128 @@ def b_game(stage, to_num='', from_num='', name='', time=0):
             twilio_resp.message('Sorry to hear it! Maybe {} will like the next one better'.format(name))
 
         resp = make_response(str(twilio_resp))
-        resp.set_cookie(Cookies.STAGE, str(9))
-        new_loop.call_soon_threadsafe(c_game, stage, to_num, from_num, name, 30)
+        resp.set_cookie(Cookies.STAGE, str(12))
+        new_loop.call_soon_threadsafe(c_game, 11, to_num, from_num, name, 30)
         return resp
 
 def c_game(stage, to_num='', from_num='', name='', time=0):
-    print('c game')
+    if stage == 11:
+        sleep(time)
+        message = 'You’re doing a great job—don’t forget to take care of yourself too! Slow breathing is a good way to relax. We can call you and guide you through it. Want to try it? Text “yes,” “no” or “later”'
+        client.messages.create(
+            to=to_num,
+            from_=from_num,
+            body=message,
+        )
+        return
+    from_num = request.form['To']
+    to_num = request.form['From']
+    if stage == 12:
+        answer = request.form['Body'].lower().strip()
+        if answer == 'yes':
+            # Initiate Call
+            client.calls.create(
+                to=to_num,
+                from_=from_num,
+                url="http://demo.twilio.com/docs/voice.xml" # TODO: Change this
+            )
+
+            twilio_resp = MessagingResponse()
+            resp = make_response(str(twilio_resp))
+            resp.set_cookie(Cookies.STAGE, str(14))
+            new_loop.call_soon_threadsafe(d_game, stage, to_num, from_num, name, 30)
+            return resp
+        if answer == 'no':
+            # Go to D
+            twilio_resp = MessagingResponse()
+
+            resp = make_response(str(twilio_resp))
+            resp.set_cookie(Cookies.STAGE, str(14))
+            new_loop.call_soon_threadsafe(d_game, stage, to_num, from_num, name, 30)
+            return resp
+        if answer == 'later':
+            # wait 30 seconds and do this over again
+            twilio_resp = MessagingResponse()
+
+            resp = make_response(str(twilio_resp))
+            resp.set_cookie(Cookies.STAGE, str(12))
+            new_loop.call_soon_threadsafe(c_game, 11, to_num, from_num, name, 30)
+            return resp
+
+def d_game(stage, to_num='', from_num='', name='', time=0):
+    sleep(time)
+    message = 'Tonton’s friend will be coming to visit you tomorrow at 12:15! You can call this number if you need to reschedule: xxxxxx-xxx.'
+    client.messages.create(
+        to=to_num,
+        from_=from_num,
+        body=message,
+    )
+    new_loop.call_soon_threadsafe(e_game, 14, to_num, from_num, name, 30)
+
+def e_game(stage, to_num='', from_num='', name='', time=0):
+    if stage == 14:
+        sleep(time)
+        message = 'It’s bedtime! Tonton has a new lullaby for {}. Want her to call now? Text ‘yes’, ’no’, or later.”'.format(name)
+        client.messages.create(
+            to=to_num,
+            from_=from_num,
+            body=message,
+        )
+        return
+    from_num = request.form['To']
+    to_num = request.form['From']
+    if stage == 15:
+        answer = request.form['Body'].lower().strip()
+        if answer == 'yes':
+            # Initiate Call
+            client.calls.create(
+                to=to_num,
+                from_=from_num,
+                url="http://demo.twilio.com/docs/voice.xml" # TODO: Change this
+            )
+
+            twilio_resp = MessagingResponse()
+            resp = make_response(str(twilio_resp))
+            resp.set_cookie(Cookies.STAGE, str(0))
+            new_loop.call_soon_threadsafe(end, stage, to_num, from_num, name, 30)
+            return resp
+        if answer == 'no':
+            # Go to  End of Demo
+            twilio_resp = MessagingResponse()
+
+            resp = make_response(str(twilio_resp))
+            resp.set_cookie(Cookies.STAGE, str(0))
+            new_loop.call_soon_threadsafe(end, stage, to_num, from_num, name, 30)
+            return resp
+        if answer == 'later':
+            # wait 30 seconds and do this over again
+            twilio_resp = MessagingResponse()
+
+            resp = make_response(str(twilio_resp))
+            resp.set_cookie(Cookies.STAGE, str(115))
+            new_loop.call_soon_threadsafe(e_game, 14, to_num, from_num, name, 30)
+            return resp
+
+def end(stage, to_num='', from_num='', name='', time=0):
+        sleep(time)
+        message1 = 'Thanks for trying this demonstration of Sesame Seeds, powered by Vroom. To learn more about this groundbreaking intervention, visit sesameworkshop.org/refugee.”'
+        message2 = 'To learn more about Vroom, visit joinvroom.org. To get a look at our design process, check out [Parenting in Displacement]'
+        message3 = 'You won’t receive any further messages from us.'
+
+        client.messages.create(
+            to=to_num,
+            from_=from_num,
+            body=message1,
+        )
+        sleep(30)
+        client.messages.create(
+            to=to_num,
+            from_=from_num,
+            body=message2,
+        )
+        sleep(30)
+        client.messages.create(
+            to=to_num,
+            from_=from_num,
+            body=message3,
+        )
