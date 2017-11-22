@@ -47,6 +47,12 @@ def sms():
     if body == 'restart':
         return opt_out()
 
+    if body == 'about':
+        return about()
+    # TODO: Help
+    # TODO: Lullaby
+    # TODO: Appointment
+
     if first_time:
         return first_time_response()
 
@@ -205,6 +211,21 @@ def check_birthday(birthday):
         return 'Happy Birthday!\n'
     return ''
 
+
+def about():
+    message1 = 'This is a proof-of-concept demonstration to show the kinds of experiences families will share with Sesame Seeds. It’s based on IRC’s work adapting Vroom for Syrian caregivers.'
+    message2 = 'To learn more about Vroom, visit joinvroom.org. To get a look at our design process, check out [Parenting in Displacement]'
+    from_num = request.form['To']
+    to_num = request.form['From']
+    client.messages.create(
+        to=to_num,
+        from_=from_num,
+        body=message1,
+    )
+    sleep(1.5)
+    twilio_resp = MessagingResponse()
+    twilio_resp.message(message2)
+    return make_response(str(twilio_resp))
 
 
 def a_game(stage):
