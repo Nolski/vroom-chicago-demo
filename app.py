@@ -43,10 +43,8 @@ def sms():
     from_num = request.form['To']
     to_num = request.form['From']
     print('STAGE -------- ', stage)
-    if stage == 13 or stage == 14:
-        stage = 12
 
-    if body == 'pineapple':
+    if body == 'restart':
         return opt_out()
 
     if first_time:
