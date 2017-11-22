@@ -49,9 +49,13 @@ def sms():
 
     if body == 'about':
         return about()
-    # TODO: Help
+    if body == 'menu':
+        return menu()
     # TODO: Lullaby
+    if body == 'lullaby':
+        return lullaby()
     # TODO: Appointment
+    # TODO: Resume
 
     if first_time:
         return first_time_response()
@@ -225,6 +229,28 @@ def about():
     sleep(1.5)
     twilio_resp = MessagingResponse()
     twilio_resp.message(message2)
+    return make_response(str(twilio_resp))
+
+def menu():
+    message = '''Options:
+
+    1. Quit
+    2. Restart
+    3. About
+    4. Resume'''
+    twilio_resp = MessagingResponse()
+    twilio_resp.message(message)
+    return make_response(str(twilio_resp))
+
+def lullaby():
+    from_num = request.form['To']
+    to_num = request.form['From']
+    client.calls.create(
+        to=to_num,
+        from_=from_num,
+        url="http://demo.twilio.com/docs/voice.xml" # TODO: Change this
+    )
+    twilio_resp = MessagingResponse()
     return make_response(str(twilio_resp))
 
 
