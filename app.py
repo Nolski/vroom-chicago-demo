@@ -193,14 +193,21 @@ def setup_account(stage):
             twilio_resp.message('Please respond with a date formatted dd/mm/yy')
             return str(twilio_resp)
 
-        message = check_birthday(birthday)
-        message += '''
-        Great! You will receive age-tailored activities for you and {} to do together. And we’ll teach you the science behind it all!”
+        message1 = check_birthday(birthday)
+        message1 += 'Great! You will receive age-tailored activities for you and {} to do together. And we’ll teach you the science behind it all!'.format(name)
+        message2 = 'If you need help, text “help.” If you want to opt out, text ‘stop’ and we’ll unenroll you immediately.'
 
-        If you need help, text “help.” If you want to opt out, text ‘stop’ and we’ll unenroll you immediately.
-        '''.format(name)
+        from_num = request.form['To']
+        to_num = request.form['From']
+        client.messages.create(
+            to=to_num,
+            from_=from_num,
+            body=message1,
+        )
+        sleep(1.5)
+
         twilio_resp = MessagingResponse()
-        twilio_resp.message(message)
+        twilio_resp.message(message2)
 
         resp = make_response(str(twilio_resp))
         resp.set_cookie(Cookies.BIRTHDAY, str(birthday))
