@@ -31,6 +31,10 @@ class Cookies():
 
 app = Flask(__name__)
 
+@app.route("/")
+def hello_world():
+    return 'Hello world!'
+
 @app.route("/sms", methods=['GET', 'POST'])
 def sms():
     first_time = request.cookies.get(Cookies.FIRST_TIME) != 'False'
