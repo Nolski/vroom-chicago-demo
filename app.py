@@ -51,11 +51,12 @@ def sms():
         return about()
     if body == 'menu':
         return menu()
-    # TODO: Lullaby
     if body == 'lullaby':
         return lullaby()
-    # TODO: Appointment
-    # TODO: Resume
+    if body == 'appointment':
+        return appointment()
+    if body == 'resume':
+        stage = stage - 1
 
     if first_time:
         return first_time_response()
@@ -251,6 +252,14 @@ def lullaby():
         url="http://demo.twilio.com/docs/voice.xml" # TODO: Change this
     )
     twilio_resp = MessagingResponse()
+    return make_response(str(twilio_resp))
+
+def appointment():
+    from_num = request.form['To']
+    to_num = request.form['From']
+    message = 'Tonton’s friend will be coming to visit you tomorrow at 12:15! You can call this number if you need to reschedule: xxx-xxx-xxx.'
+    twilio_resp = MessagingResponse()
+    twilio_resp.message(message)
     return make_response(str(twilio_resp))
 
 
