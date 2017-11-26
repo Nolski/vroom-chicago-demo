@@ -246,7 +246,7 @@ def lullaby():
     client.calls.create(
         to=to_num,
         from_=from_num,
-        url="http://demo.twilio.com/docs/voice.xml" # TODO: Change this
+        url="https://s3.amazonaws.com/vroom-chicago-demo/soundsgame.xml" # TODO: Change this
     )
     twilio_resp = MessagingResponse()
     return make_response(str(twilio_resp))
