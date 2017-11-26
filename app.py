@@ -477,8 +477,9 @@ def e_game(stage, to_num='', from_num='', name='', time=0):
             new_loop.call_soon_threadsafe(e_game, 14, to_num, from_num, name, 30)
             return resp
 
-def end(stage=0, to_num='', from_num='', name='', time=0):
-        sleep(time)
+def end():
+        from_num = request.form['To']
+        to_num = request.form['From']
         message1 = 'Thanks for trying this demonstration of Sesame Seeds, powered by Vroom. To learn more about this groundbreaking intervention, visit sesameworkshop.org/refugee.”'
         message2 = 'To learn more about Vroom, visit joinvroom.org. To get a look at our design process, check out [Parenting in Displacement]'
         message3 = 'You won’t receive any further messages from us.'
