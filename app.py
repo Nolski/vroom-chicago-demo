@@ -79,7 +79,6 @@ def sms():
     if stage == 15:
         return e_game(stage)
 
-    end()
     twilio_resp = MessagingResponse()
     resp = make_response(str(twilio_resp))
     resp.set_cookie(Cookies.STAGE, str(0))
@@ -89,7 +88,7 @@ def sms():
 
 def first_time_response():
     message1 = 'Welcome to  Sesame Seeds, powered by Vroom.'
-    message2 = 'This is a proof-of-concept demonstration to show the kinds of experiences families will share in Jordan, Lebanon, Iraq and Syria. We are not collecting any data and you can opt-out of messages at any time by texting ‘stop’.'
+    message2 = 'This is a proof-of-concept demonstration to show the kinds of experiences families will share in Jordan, Lebanon, Iraq and Syria. We are not collecting any data and you can opt-out of messages at any time by texting `STOP`.'
     message3 = 'In this demo, you will play the part of a caregiver of a child under the age of 6. Respond OK when ready.'
     from_num = request.form['To']
     to_num = request.form['From']
@@ -120,9 +119,9 @@ def first_time_response():
 def opt_in():
     user_response = request.form['Body'].lower()
     if user_response not in ['ok', 'yes']:
-        return opt_out()
+        return end()
 
-    message1 = 'اَلسَّلَامُ عَلَيْكُ! You have what it takes to nurture a young child’s brain.'
+    message1 = 'اَلسَّلَامُ عَلَيْكُ!\n You have what it takes to nurture a young child’s brain.'
     message2 = 'Let’s get started. First, what’s your child’s name?'
 
     from_num = request.form['To']
@@ -144,17 +143,6 @@ def opt_in():
 
     return resp
 
-def opt_out():
-    twilio_resp = MessagingResponse()
-    twilio_resp.message('No worries.')
-
-    resp = make_response(str(twilio_resp))
-    resp.set_cookie(Cookies.FIRST_TIME, str(True))
-    resp.set_cookie(Cookies.STAGE, str(0))
-    resp.set_cookie(Cookies.OPT_IN, str(False))
-
-    return resp
-
 def setup_account(stage):
     if stage == 2: # Ask gender
         name = request.form['Body']
@@ -173,7 +161,7 @@ def setup_account(stage):
             twilio_resp = MessagingResponse()
             twilio_resp.message('Please respond "boy" or "girl"')
             return str(twilio_resp)
-        pronoun = 'his' if gender is 'boy' else 'her'
+        pronoun = 'his' if gender == 'boy' else 'her'
         message = 'What’s {} birthday? Use dd/mm/yy'.format(pronoun)
         twilio_resp = MessagingResponse()
         twilio_resp.message(message)
@@ -184,18 +172,19 @@ def setup_account(stage):
         return resp
 
     if stage == 4: # Finish setup
-        r = re.compile('^\d\d\/\d\d\/\d\d$')
         birthday = request.form['Body']
         name = request.cookies.get(Cookies.NAME)
-
-        if not r.search(birthday):
+        try:
+            birthday_date = datetime.strptime(birthday, '%d/%m/%y')
+        except:
             twilio_resp = MessagingResponse()
             twilio_resp.message('Please respond with a date formatted dd/mm/yy')
             return str(twilio_resp)
 
-        message1 = check_birthday(birthday)
+        birthday_date = datetime.strptime(birthday, '%d/%m/%y')
+        message1 = check_birthday(birthday_date)
         message1 += 'Great! You will receive age-tailored activities for you and {} to do together. And we’ll teach you the science behind it all!'.format(name)
-        message2 = 'If you need help, text “help.” If you want to opt out, text ‘stop’ and we’ll unenroll you immediately.'
+        message2 = 'If you need help, text `HELP` If you want to opt out, text `STOP` and we’ll unenroll you immediately.'
 
         from_num = request.form['To']
         to_num = request.form['From']
@@ -216,10 +205,10 @@ def setup_account(stage):
 
     return opt_out()
 
-def check_birthday(birthday):
-    birthday_date = datetime.strptime(birthday, '%d/%m/%y')
+def check_birthday(birthday_date):
+    now = datetime.today()
 
-    if birthday_date.date() == datetime.today().date():
+    if birthday_date.month == now.month and birthday_date.day == now.day:
         return 'Happy Birthday!\n'
     return ''
 
