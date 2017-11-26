@@ -45,10 +45,7 @@ def sms():
     print('STAGE -------- ', stage)
 
     if body == 'restart':
-        end()
-        twilio_resp = MessagingResponse()
-        resp = make_response(str(twilio_resp))
-        return resp
+        return end()
 
 
     if body == 'about':
@@ -123,11 +120,7 @@ def first_time_response():
 def opt_in():
     user_response = request.form['Body'].lower()
     if user_response not in ['ok', 'yes']:
-        end()
-        twilio_resp = MessagingResponse()
-        resp = make_response(str(twilio_resp))
-        return resp
-
+        return end()
 
     message1 = 'اَلسَّلَامُ عَلَيْكُ!\n You have what it takes to nurture a young child’s brain.'
     message2 = 'Let’s get started. First, what’s your child’s name?'
@@ -211,11 +204,7 @@ def setup_account(stage):
         resp.set_cookie(Cookies.STAGE, str(5))
         return resp
 
-    end()
-    twilio_resp = MessagingResponse()
-    resp = make_response(str(twilio_resp))
-    return resp
-
+    return end()
 
 def check_birthday(birthday_date):
     now = datetime.today()
@@ -478,26 +467,38 @@ def e_game(stage, to_num='', from_num='', name='', time=0):
             return resp
 
 def end():
-        from_num = request.form['To']
-        to_num = request.form['From']
-        message1 = 'Thanks for trying this demonstration of Sesame Seeds, powered by Vroom. To learn more about this groundbreaking intervention, visit sesameworkshop.org/refugee.”'
-        message2 = 'To learn more about Vroom, visit joinvroom.org. To get a look at our design process, check out [Parenting in Displacement]'
-        message3 = 'You won’t receive any further messages from us.'
+    from_num = request.form['To']
+    to_num = request.form['From']
+    message1 = 'Thanks for trying this demonstration of Sesame Seeds, powered by Vroom. To learn more about this groundbreaking intervention, visit sesameworkshop.org/refugee.”'
+    message2 = 'To learn more about Vroom, visit joinvroom.org. To get a look at our design process, check out [Parenting in Displacement]'
+    message3 = 'You won’t receive any further messages from us.'
 
-        client.messages.create(
-            to=to_num,
-            from_=from_num,
-            body=message1,
-        )
-        sleep(1.5)
-        client.messages.create(
-            to=to_num,
-            from_=from_num,
-            body=message2,
-        )
-        sleep(1.5)
-        client.messages.create(
-            to=to_num,
-            from_=from_num,
-            body=message3,
-        )
+    client.messages.create(
+        to=to_num,
+        from_=from_num,
+        body=message1,
+    )
+    sleep(1.5)
+    client.messages.create(
+        to=to_num,
+        from_=from_num,
+        body=message2,
+    )
+    sleep(1.5)
+    twilio_resp = MessagingResponse()
+    twilio_resp.message(message3)
+
+    resp = make_response(str(twilio_resp))
+    resp.set_cookie(Cookies.FIRST_TIME, '', expires=0)
+    resp.set_cookie(Cookies.STAGE, '', expires=0)
+    resp.set_cookie(Cookies.OPT_IN, '', expires=0)
+    resp.set_cookie(Cookies.NAME, '', expires=0)
+    resp.set_cookie(Cookies.GENDER, '', expires=0)
+    resp.set_cookie(Cookies.BIRTHDAY, '', expires=0)
+    return resp
+
+    client.messages.create(
+        to=to_num,
+        from_=from_num,
+        body=message3,
+    )
