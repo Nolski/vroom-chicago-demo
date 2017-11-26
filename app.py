@@ -45,7 +45,7 @@ def sms():
     print('STAGE -------- ', stage)
 
     if body == 'restart':
-        return opt_out()
+        return end()
 
     if body == 'about':
         return about()
@@ -203,7 +203,7 @@ def setup_account(stage):
         resp.set_cookie(Cookies.STAGE, str(5))
         return resp
 
-    return opt_out()
+    return end()
 
 def check_birthday(birthday_date):
     now = datetime.today()
