@@ -489,13 +489,13 @@ def end():
             from_=from_num,
             body=message1,
         )
-        sleep(30)
+        sleep(1.5)
         client.messages.create(
             to=to_num,
             from_=from_num,
             body=message2,
         )
-        sleep(30)
+        sleep(1.5)
         client.messages.create(
             to=to_num,
             from_=from_num,
