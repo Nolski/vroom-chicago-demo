@@ -45,7 +45,11 @@ def sms():
     print('STAGE -------- ', stage)
 
     if body == 'restart':
-        return end()
+        end()
+        twilio_resp = MessagingResponse()
+        resp = make_response(str(twilio_resp))
+        return resp
+
 
     if body == 'about':
         return about()
@@ -119,7 +123,11 @@ def first_time_response():
 def opt_in():
     user_response = request.form['Body'].lower()
     if user_response not in ['ok', 'yes']:
-        return end()
+        end()
+        twilio_resp = MessagingResponse()
+        resp = make_response(str(twilio_resp))
+        return resp
+
 
     message1 = 'اَلسَّلَامُ عَلَيْكُ!\n You have what it takes to nurture a young child’s brain.'
     message2 = 'Let’s get started. First, what’s your child’s name?'
@@ -203,7 +211,11 @@ def setup_account(stage):
         resp.set_cookie(Cookies.STAGE, str(5))
         return resp
 
-    return end()
+    end()
+    twilio_resp = MessagingResponse()
+    resp = make_response(str(twilio_resp))
+    return resp
+
 
 def check_birthday(birthday_date):
     now = datetime.today()
@@ -465,7 +477,7 @@ def e_game(stage, to_num='', from_num='', name='', time=0):
             new_loop.call_soon_threadsafe(e_game, 14, to_num, from_num, name, 30)
             return resp
 
-def end(stage, to_num='', from_num='', name='', time=0):
+def end(stage=0, to_num='', from_num='', name='', time=0):
         sleep(time)
         message1 = 'Thanks for trying this demonstration of Sesame Seeds, powered by Vroom. To learn more about this groundbreaking intervention, visit sesameworkshop.org/refugee.”'
         message2 = 'To learn more about Vroom, visit joinvroom.org. To get a look at our design process, check out [Parenting in Displacement]'
