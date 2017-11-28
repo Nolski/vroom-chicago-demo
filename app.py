@@ -7,7 +7,6 @@ from threading import Thread
 from time import sleep
 
 from flask import Flask, request, make_response, Response, stream_with_context
-from flask_s3 import FlaskS3
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.twiml.voice_response import Play, VoiceResponse
 from twilio.rest import Client
@@ -33,10 +32,6 @@ class Cookies():
     BIRTHDAY = 'birthday'
 
 app = Flask(__name__)
-app.config['FLASKS3_BUCKET_NAME'] = 'vroom-chicago-demo'
-app.config['FLASKS3_URL_STYLE'] = 'path'
-app.config['FLASKS3_DEBUG'] = True
-s3 = FlaskS3(app)
 
 @app.route('/soundsgame.xml', methods=['GET', 'POST'])
 def soundsgame_xml():
