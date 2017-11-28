@@ -1,12 +1,15 @@
 import re
 import os
 import asyncio
+import requests
 from datetime import datetime, timedelta
 from threading import Thread
 from time import sleep
 
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, Response, stream_with_context
+from flask_s3 import FlaskS3
 from twilio.twiml.messaging_response import MessagingResponse
+from twilio.twiml.voice_response import Play, VoiceResponse
 from twilio.rest import Client
 
 account_sid = os.environ.get('TWILIO_SID')
@@ -30,10 +33,16 @@ class Cookies():
     BIRTHDAY = 'birthday'
 
 app = Flask(__name__)
+app.config['FLASKS3_BUCKET_NAME'] = 'vroom-chicago-demo'
+app.config['FLASKS3_URL_STYLE'] = 'path'
+app.config['FLASKS3_DEBUG'] = True
+s3 = FlaskS3(app)
 
-@app.route("/")
-def hello_world():
-    return 'Hello world!'
+@app.route('/soundsgame.xml', methods=['GET', 'POST'])
+def soundsgame_xml():
+    response = VoiceResponse()
+    response.play('https://vroom-chicago-demo.s3.amazonaws.com/soundsgame.mp3')
+    return Response(str(response), mimetype='text/xml')
 
 @app.route("/sms", methods=['GET', 'POST'])
 def sms():
@@ -246,7 +255,7 @@ def lullaby():
     client.calls.create(
         to=to_num,
         from_=from_num,
-        url="https://s3.amazonaws.com/vroom-chicago-demo/soundsgame.xml" # TODO: Change this
+        url="https://glacial-hollows-80092.herokuapp.com/soundsgame.xml" # TODO: Change this
     )
     twilio_resp = MessagingResponse()
     return make_response(str(twilio_resp))
