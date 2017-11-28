@@ -138,12 +138,11 @@ def opt_in():
     )
     sleep(1.5)
 
-
     twilio_resp = MessagingResponse()
     twilio_resp.message(message2)
 
     resp = make_response(str(twilio_resp))
-    resp.set_cookie(Cookies.STAGE, str(2))
+    resp.set_cookie(Cookies.STAGE, str(5))
     resp.set_cookie(Cookies.OPT_IN, str(True))
 
     return resp
