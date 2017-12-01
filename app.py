@@ -51,9 +51,6 @@ def sms():
     if body == 'restart':
         return end()
 
-
-    if body == 'about':
-        return about()
     if body == 'menu':
         return menu()
     if body == 'lullaby':
@@ -217,21 +214,6 @@ def check_birthday(birthday_date):
     return ''
 
 
-def about():
-    message1 = 'This is a proof-of-concept demonstration to show the kinds of experiences families will share with Sesame Seeds. It’s based on IRC’s work adapting Vroom for Syrian caregivers.'
-    message2 = 'To learn more about Vroom, visit joinvroom.org. To get a look at our design process, check out [Parenting in Displacement]'
-    from_num = request.form['To']
-    to_num = request.form['From']
-    client.messages.create(
-        to=to_num,
-        from_=from_num,
-        body=message1,
-    )
-    sleep(1.5)
-    twilio_resp = MessagingResponse()
-    twilio_resp.message(message2)
-    return make_response(str(twilio_resp))
-
 def menu():
     message = '''Options:
 
@@ -268,6 +250,7 @@ def a_game(stage):
     from_num = request.form['To']
     to_num = request.form['From']
     if stage == 5: # Intro game
+        name = request.form['Body'].strip()
         now = datetime.now().strftime('%A, %B %dth')
         message = 'It’s {}. Time for today’s game! Today, we’ll do Hide and Seek, which is great for children like {}. Text “OK” to get started.'.format(now, name)
         twilio_resp = MessagingResponse()
@@ -275,6 +258,7 @@ def a_game(stage):
 
         resp = make_response(str(twilio_resp))
         resp.set_cookie(Cookies.STAGE, str(6))
+        resp.set_cookie(Cookies.NAME, name)
         return resp
     if stage == 6: # Confirm start
         response = request.form['Body']
@@ -310,29 +294,26 @@ def a_game(stage):
         resp.set_cookie(Cookies.STAGE, str(7))
         return resp
     if stage == 7 or stage == 8:
-        response = request.form['Body']
+        response = request.form['Body'].strip()
         twilio_resp = MessagingResponse()
         if response.lower() == 'yes':
-            twilio_resp.message('Great! We’ll send you more like this.')
+            message = 'Great! We’ll send you more like this.'
         else:
-            twilio_resp.message('Sorry to hear it! Maybe {} will like the next one better'.format(name))
+            message = 'Sorry to hear it! Maybe {} will like the next one better'.format(name)
 
-        resp = make_response(str(twilio_resp))
-        resp.set_cookie(Cookies.STAGE, str(9))
-        new_loop.call_soon_threadsafe(b_game, stage, to_num, from_num, name, 30)
-        return resp
+        return b_game(8, to_num, from_num, name)
 
 def b_game(stage, to_num='', from_num='', name='', time=0):
     now = datetime.now().strftime('%A, %B %dth')
     if stage == 8:
         sleep(time)
         message = 'It’s {}th. Time for today’s game! Today, we’ll do 1-2-3 Jump, which is great for children like {}. Text “OK” to get started'.format(now, name)
-        client.messages.create(
-            to=to_num,
-            from_=from_num,
-            body=message,
-        )
-        return
+        twilio_resp = MessagingResponse()
+        twilio_resp.message(message)
+
+        resp =  make_response(str(twilio_resp))
+        resp.set_cookie(Cookies.STAGE, str(9))
+        return resp
     name = request.cookies.get(Cookies.NAME)
     from_num = request.form['To']
     to_num = request.form['From']
@@ -450,7 +431,7 @@ def e_game(stage, to_num='', from_num='', name='', time=0):
             twilio_resp = MessagingResponse()
             resp = make_response(str(twilio_resp))
             resp.set_cookie(Cookies.STAGE, str(0))
-            new_loop.call_soon_threadsafe(end, stage, to_num, from_num, name, 30)
+            new_loop.call_soon_threadsafe(end, stage, to_num, from_num, name, 30) # TODO: Fix this
             return resp
         if answer == 'no':
             # Go to  End of Demo
@@ -458,7 +439,7 @@ def e_game(stage, to_num='', from_num='', name='', time=0):
 
             resp = make_response(str(twilio_resp))
             resp.set_cookie(Cookies.STAGE, str(0))
-            new_loop.call_soon_threadsafe(end, stage, to_num, from_num, name, 30)
+            new_loop.call_soon_threadsafe(end, stage, to_num, from_num, name, 30) # TODO: Fix this
             return resp
         if answer == 'later':
             # wait 30 seconds and do this over again
@@ -500,7 +481,7 @@ def end():
     resp.set_cookie(Cookies.BIRTHDAY, '', expires=0)
     return resp
 
-    client.messages.create(
+    client.messages.create( # TODO: Fix this
         to=to_num,
         from_=from_num,
         body=message3,
