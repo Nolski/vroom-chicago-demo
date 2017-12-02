@@ -60,7 +60,7 @@ def sms():
     if body == 'resume':
         stage = stage - 1
 
-    if first_time:
+    if first_time and body == 'sesame':
         return first_time_response()
 
     if stage == 1:
@@ -83,8 +83,6 @@ def sms():
 
     twilio_resp = MessagingResponse()
     resp = make_response(str(twilio_resp))
-    resp.set_cookie(Cookies.STAGE, str(0))
-    resp.set_cookie(Cookies.FIRST_TIME, str(True))
     return resp
 
 
