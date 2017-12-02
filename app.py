@@ -63,6 +63,11 @@ def sms():
     if first_time and body == 'sesame':
         return first_time_response()
 
+    if stage == 0:
+        twilio_resp = MessagingResponse()
+        resp = make_response(str(twilio_resp))
+        return resp
+
     if stage == 1:
         return opt_in()
 
@@ -80,10 +85,6 @@ def sms():
 
     if stage == 15:
         return e_game(stage)
-
-    twilio_resp = MessagingResponse()
-    resp = make_response(str(twilio_resp))
-    return resp
 
 
 def first_time_response():
@@ -347,13 +348,13 @@ def b_game(stage, to_num='', from_num='', name='', time=0):
 
         resp = make_response(str(twilio_resp))
         resp.set_cookie(Cookies.STAGE, str(12))
-        new_loop.call_soon_threadsafe(c_game, 11, to_num, from_num, name, 30)
+        new_loop.call_soon_threadsafe(c_game, 11, to_num, from_num, name, 2)
         return resp
 
 def c_game(stage, to_num='', from_num='', name='', time=0):
     if stage == 11:
         sleep(time)
-        message = 'You’re doing a great job—don’t forget to take care of yourself too! Slow breathing is a good way to relax. We can call you and guide you through it. Want to try it? Text “yes,” “no” or “later”'
+        message = 'You’re doing a great job—don’t forget to take care of yourself too! Slow breathing is a good way to relax. We can call you and guide you through it. Want to try it? Text `YES` or `NO`'
         client.messages.create(
             to=to_num,
             from_=from_num,
@@ -374,24 +375,16 @@ def c_game(stage, to_num='', from_num='', name='', time=0):
 
             twilio_resp = MessagingResponse()
             resp = make_response(str(twilio_resp))
-            resp.set_cookie(Cookies.STAGE, str(14))
-            new_loop.call_soon_threadsafe(d_game, stage, to_num, from_num, name, 30)
+            resp.set_cookie(Cookies.STAGE, str(15))
+            new_loop.call_soon_threadsafe(d_game, stage, to_num, from_num, name, 2)
             return resp
-        if answer == 'no':
+        else:
             # Go to D
             twilio_resp = MessagingResponse()
 
             resp = make_response(str(twilio_resp))
-            resp.set_cookie(Cookies.STAGE, str(14))
-            new_loop.call_soon_threadsafe(d_game, stage, to_num, from_num, name, 30)
-            return resp
-        if answer == 'later':
-            # wait 30 seconds and do this over again
-            twilio_resp = MessagingResponse()
-
-            resp = make_response(str(twilio_resp))
-            resp.set_cookie(Cookies.STAGE, str(12))
-            new_loop.call_soon_threadsafe(c_game, 11, to_num, from_num, name, 30)
+            resp.set_cookie(Cookies.STAGE, str(15))
+            new_loop.call_soon_threadsafe(d_game, stage, to_num, from_num, name, 2)
             return resp
 
 def d_game(stage, to_num='', from_num='', name='', time=0):
@@ -402,12 +395,12 @@ def d_game(stage, to_num='', from_num='', name='', time=0):
         from_=from_num,
         body=message,
     )
-    new_loop.call_soon_threadsafe(e_game, 14, to_num, from_num, name, 30)
+    new_loop.call_soon_threadsafe(e_game, 14, to_num, from_num, name, 2)
 
 def e_game(stage, to_num='', from_num='', name='', time=0):
     if stage == 14:
         sleep(time)
-        message = 'It’s bedtime! Tonton has a new lullaby for {}. Want her to call now? Text ‘yes’, ’no’, or later.”'.format(name)
+        message = 'It’s bedtime! Tonton has a new lullaby for {}. Want her to call now? Text ‘YES’ or ’NO’.”'.format(name)
         client.messages.create(
             to=to_num,
             from_=from_num,
@@ -426,27 +419,12 @@ def e_game(stage, to_num='', from_num='', name='', time=0):
                 url="http://demo.twilio.com/docs/voice.xml" # TODO: Change this
             )
 
-            twilio_resp = MessagingResponse()
-            resp = make_response(str(twilio_resp))
-            resp.set_cookie(Cookies.STAGE, str(0))
-            new_loop.call_soon_threadsafe(end, stage, to_num, from_num, name, 30) # TODO: Fix this
-            return resp
+            return end()
         if answer == 'no':
             # Go to  End of Demo
             twilio_resp = MessagingResponse()
 
-            resp = make_response(str(twilio_resp))
-            resp.set_cookie(Cookies.STAGE, str(0))
-            new_loop.call_soon_threadsafe(end, stage, to_num, from_num, name, 30) # TODO: Fix this
-            return resp
-        if answer == 'later':
-            # wait 30 seconds and do this over again
-            twilio_resp = MessagingResponse()
-
-            resp = make_response(str(twilio_resp))
-            resp.set_cookie(Cookies.STAGE, str(115))
-            new_loop.call_soon_threadsafe(e_game, 14, to_num, from_num, name, 30)
-            return resp
+            return end()
 
 def end():
     from_num = request.form['To']
