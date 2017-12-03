@@ -45,10 +45,8 @@ def checkgame():
         twilio_resp = MessagingResponse()
         if request.values.get('SmsStatus') == 'delivered':
             message = 'Let us know when you finish the activity! Did {} like the activity? Text ‘yes’ or ‘no”'.format(name)
-            from_num = request.form['To']
-            to_num = request.form['From']
-            import ipdb
-            ipdb.set_trace()
+            from_num = request.form['From']
+            to_num = request.form['To']
             client.messages.create(
                 to=to_num,
                 from_=from_num,
@@ -237,8 +235,7 @@ def menu():
 
     1. Quit
     2. Restart
-    3. About
-    4. Resume'''
+    3. Resume'''
     twilio_resp = MessagingResponse()
     twilio_resp.message(message)
     return make_response(str(twilio_resp))
@@ -290,7 +287,7 @@ def a_game(stage):
             return resp
 
         name = request.cookies.get(Cookies.NAME)
-        message1 = 'This one is simple, but teaches object permanence. Cover your face with a cloth and then…'
+        message1 = 'Hiding games are fun for all ages. For babies, briefly hide your face behind your hands or a cloth.  WATCH: http://bit.ly/link1'
         client.messages.create(
             to=to_num,
             from_=from_num,
@@ -300,9 +297,9 @@ def a_game(stage):
         client.messages.create(
             to=to_num,
             from_=from_num,
-            body='https://s3.amazonaws.com/vroom-chicago-demo/hideandseek_lower.mp4',
+            body='',
             media_url='https://user-images.githubusercontent.com/541325/33525186-c816c084-d865-11e7-8eff-2a25e5498c33.jpg',
-            status_callback='http://7019f830.ngrok.io/checkgame'
+            status_callback='http://4bd5b984.ngrok.io/checkgame'
         )
         sleep(1.5)
         twilio_resp = MessagingResponse()
@@ -344,7 +341,7 @@ def b_game(stage, to_num='', from_num='', name='', time=0):
         client.messages.create(
             to=to_num,
             from_=from_num,
-            body='https://s3.amazonaws.com/vroom-chicago-demo/123jump.mp4',
+            body='',
             media_url='https://user-images.githubusercontent.com/541325/33525189-c931aa10-d865-11e7-8eb0-26faa1b8b065.png',
         )
         sleep(1.5)
