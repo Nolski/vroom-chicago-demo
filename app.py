@@ -39,6 +39,25 @@ def soundsgame_xml():
     response.play('https://vroom-chicago-demo.s3.amazonaws.com/soundsgame.mp3')
     return Response(str(response), mimetype='text/xml')
 
+@app.route('/checkgame', methods=['GET', 'POST'])
+def checkgame():
+        name = request.cookies.get(Cookies.NAME)
+        twilio_resp = MessagingResponse()
+        if request.values.get('SmsStatus') == 'delivered':
+            message = 'Let us know when you finish the activity! Did {} like the activity? Text ‘yes’ or ‘no”'.format(name)
+            from_num = request.form['To']
+            to_num = request.form['From']
+            import ipdb
+            ipdb.set_trace()
+            client.messages.create(
+                to=to_num,
+                from_=from_num,
+                body=message,
+            )
+
+        resp = make_response(str(twilio_resp))
+        return resp
+
 @app.route("/sms", methods=['GET', 'POST'])
 def sms():
     first_time = request.cookies.get(Cookies.FIRST_TIME) != 'False'
@@ -272,7 +291,6 @@ def a_game(stage):
 
         name = request.cookies.get(Cookies.NAME)
         message1 = 'This one is simple, but teaches object permanence. Cover your face with a cloth and then…'
-        message2 = 'Let us know when you finish the activity! Did {} like the activity? Text ‘yes’ or ‘no”'.format(name)
         client.messages.create(
             to=to_num,
             from_=from_num,
@@ -283,12 +301,11 @@ def a_game(stage):
             to=to_num,
             from_=from_num,
             body='https://s3.amazonaws.com/vroom-chicago-demo/hideandseek_lower.mp4',
-            # media_url='https://s3.amazonaws.com/vroom-chicago-demo/hideandseek_lower.mp4',
+            media_url='https://user-images.githubusercontent.com/541325/33525186-c816c084-d865-11e7-8eff-2a25e5498c33.jpg',
+            status_callback='http://7019f830.ngrok.io/checkgame'
         )
         sleep(1.5)
         twilio_resp = MessagingResponse()
-        twilio_resp.message(message2)
-
         resp = make_response(str(twilio_resp))
         resp.set_cookie(Cookies.STAGE, str(7))
         return resp
@@ -318,7 +335,6 @@ def b_game(stage, to_num='', from_num='', name='', time=0):
     to_num = request.form['From']
     if stage == 9:
         message1 = 'This one is simple, but teaches executive function. Watch this video and give it a try!'
-        message3 = 'Let us know when you finish the activity! Did {} like the activity? Text ‘yes’ or ‘no”'.format(name)
         client.messages.create(
             to=to_num,
             from_=from_num,
@@ -329,12 +345,10 @@ def b_game(stage, to_num='', from_num='', name='', time=0):
             to=to_num,
             from_=from_num,
             body='https://s3.amazonaws.com/vroom-chicago-demo/123jump.mp4',
-            # media_url='https://s3.amazonaws.com/vroom-chicago-demo/123jump.mp4',
+            media_url='https://user-images.githubusercontent.com/541325/33525189-c931aa10-d865-11e7-8eb0-26faa1b8b065.png',
         )
         sleep(1.5)
         twilio_resp = MessagingResponse()
-        twilio_resp.message(message3)
-
         resp = make_response(str(twilio_resp))
         resp.set_cookie(Cookies.STAGE, str(10))
         return resp
