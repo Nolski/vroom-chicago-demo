@@ -2,7 +2,7 @@ import re
 import os
 import asyncio
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from threading import Thread
 from time import sleep
 
@@ -13,6 +13,7 @@ from twilio.rest import Client
 
 account_sid = os.environ.get('TWILIO_SID')
 auth_token = os.environ.get('TWILIO_AUTH')
+STATUS_URL = 'http://4bd5b984.ngrok.io/checkgame'
 
 client = Client(account_sid, auth_token)
 
@@ -299,7 +300,7 @@ def a_game(stage):
             from_=from_num,
             body='',
             media_url='https://user-images.githubusercontent.com/541325/33525186-c816c084-d865-11e7-8eff-2a25e5498c33.jpg',
-            status_callback='http://4bd5b984.ngrok.io/checkgame'
+            status_callback=STATUS_URL,
         )
         sleep(1.5)
         twilio_resp = MessagingResponse()
@@ -320,7 +321,7 @@ def b_game(stage, to_num='', from_num='', name='', time=0):
     now = datetime.now().strftime('%A, %B %dth')
     if stage == 8:
         sleep(time)
-        message = 'It’s {}th. Time for today’s game! Today, we’ll do 1-2-3 Jump, which is great for children like {}. Text “OK” to get started'.format(now, name)
+        message = 'It’s {}. Time for today’s game! Today, we’ll do 1-2-3 Jump, which is great for children like {}. Text “OK” to get started'.format(now, name)
         twilio_resp = MessagingResponse()
         twilio_resp.message(message)
 
@@ -343,6 +344,7 @@ def b_game(stage, to_num='', from_num='', name='', time=0):
             from_=from_num,
             body='',
             media_url='https://user-images.githubusercontent.com/541325/33525189-c931aa10-d865-11e7-8eb0-26faa1b8b065.png',
+            status_callback=STATUS_URL,
         )
         sleep(1.5)
         twilio_resp = MessagingResponse()
@@ -358,55 +360,22 @@ def b_game(stage, to_num='', from_num='', name='', time=0):
             twilio_resp.message('Sorry to hear it! Maybe {} will like the next one better'.format(name))
 
         resp = make_response(str(twilio_resp))
-        resp.set_cookie(Cookies.STAGE, str(12))
+        resp.set_cookie(Cookies.STAGE, str(15))
         new_loop.call_soon_threadsafe(c_game, 11, to_num, from_num, name, 2)
         return resp
 
 def c_game(stage, to_num='', from_num='', name='', time=0):
     if stage == 11:
         sleep(time)
-        message = 'You’re doing a great job—don’t forget to take care of yourself too! Slow breathing is a good way to relax. We can call you and guide you through it. Want to try it? Text `YES` or `NO`'
+        tomorrow = date.today() + timedelta(days=1)
+        tomorrow = tomorrow.strftime('%A, %B %dth')
+        message = 'Good evening! Myriam will visit you tomorrow, {} at 12:15pm. She will bring a new storybook for {}.'.format(tomorrow, name)
         client.messages.create(
             to=to_num,
             from_=from_num,
             body=message,
         )
-        return
-    from_num = request.form['To']
-    to_num = request.form['From']
-    if stage == 12:
-        answer = request.form['Body'].lower().strip()
-        if answer == 'yes':
-            # Initiate Call
-            client.calls.create(
-                to=to_num,
-                from_=from_num,
-                url="http://demo.twilio.com/docs/voice.xml" # TODO: Change this
-            )
-
-            twilio_resp = MessagingResponse()
-            resp = make_response(str(twilio_resp))
-            resp.set_cookie(Cookies.STAGE, str(15))
-            new_loop.call_soon_threadsafe(d_game, stage, to_num, from_num, name, 2)
-            return resp
-        else:
-            # Go to D
-            twilio_resp = MessagingResponse()
-
-            resp = make_response(str(twilio_resp))
-            resp.set_cookie(Cookies.STAGE, str(15))
-            new_loop.call_soon_threadsafe(d_game, stage, to_num, from_num, name, 2)
-            return resp
-
-def d_game(stage, to_num='', from_num='', name='', time=0):
-    sleep(time)
-    message = 'Tonton’s friend will be coming to visit you tomorrow at 12:15! You can call this number if you need to reschedule: xxxxxx-xxx.'
-    client.messages.create(
-        to=to_num,
-        from_=from_num,
-        body=message,
-    )
-    new_loop.call_soon_threadsafe(e_game, 14, to_num, from_num, name, 2)
+        new_loop.call_soon_threadsafe(e_game, 14, to_num, from_num, name, 2)
 
 def e_game(stage, to_num='', from_num='', name='', time=0):
     if stage == 14:
