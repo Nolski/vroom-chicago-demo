@@ -13,7 +13,7 @@ from twilio.rest import Client
 
 account_sid = os.environ.get('TWILIO_SID')
 auth_token = os.environ.get('TWILIO_AUTH')
-STATUS_URL = 'https://glacial-hollows-80092.herokuapp.com/checkgame'
+STATUS_URL = 'http://9bee421b.ngrok.io/checkgame'
 
 client = Client(account_sid, auth_token)
 
@@ -45,7 +45,7 @@ def checkgame():
         name = request.cookies.get(Cookies.NAME)
         twilio_resp = MessagingResponse()
         if request.values.get('SmsStatus') == 'delivered':
-            message = 'Let us know when you finish the activity! Did {} like the activity? Text ‘yes’ or ‘no”'.format(name)
+            message = 'Did they like the activity? Reply YES/NO'
             from_num = request.form['From']
             to_num = request.form['To']
             client.messages.create(
@@ -223,9 +223,10 @@ def lullaby():
     return make_response(str(twilio_resp))
 
 def appointment():
-    from_num = request.form['To']
-    to_num = request.form['From']
-    message = 'Tonton’s friend will be coming to visit you tomorrow at 12:15! You can call this number if you need to reschedule: xxx-xxx-xxx.'
+    name = request.cookies.get(Cookies.NAME) if request.cookies.get(Cookies.NAME) else 'you'
+    tdate = date.today() + timedelta(days=1)
+    tomorrow = tdate.strftime('%A, %B %dth')
+    message = f'Good evening! Myriam will visit you tomorrow, {tomorrow} at 12:15pm. She will bring a new storybook for {name}.'
     twilio_resp = MessagingResponse()
     twilio_resp.message(message)
     return make_response(str(twilio_resp))
@@ -235,7 +236,7 @@ def a_game(stage):
     name = request.cookies.get(Cookies.NAME)
     from_num = request.form['To']
     to_num = request.form['From']
-    if stage == 5: # Intro game
+    if False: # Intro game
         name = request.form['Body'].strip()
         now = datetime.now().strftime('%A, %B %dth')
         message = 'It’s {}. Time for today’s game! Today, we’ll do Hide and Seek, which is great for children like {}. Text “OK” to get started.'.format(now, name)
@@ -246,19 +247,10 @@ def a_game(stage):
         resp.set_cookie(Cookies.STAGE, str(6))
         resp.set_cookie(Cookies.NAME, name)
         return resp
-    if stage == 6: # Confirm start
-        response = request.form['Body']
-        if response.lower() != 'ok':
-            message = 'No worries! Text back later when you\'re ready'
-            twilio_resp = MessagingResponse()
-            twilio_resp.message(message)
-
-            resp = make_response(str(twilio_resp))
-            resp.set_cookie(Cookies.STAGE, str(5))
-            return resp
-
-        name = request.cookies.get(Cookies.NAME)
-        message1 = 'Hiding games are fun for all ages. For babies, briefly hide your face behind your hands or a cloth.  WATCH how Tonton plays: http://bit.ly/link1'
+    if stage == 5 or stage == 6: # Confirm start
+        name = request.form['Body'].strip()
+        now = datetime.now().strftime('%A, %B %dth')
+        message1 = f'It’s {now}. Time for today’s activity! Hiding games are fun for all ages. For babies, briefly hide your face behind your hands or a cloth.  WATCH how Tonton plays: http://bit.ly/link1'
         client.messages.create(
             to=to_num,
             from_=from_num,
@@ -276,33 +268,36 @@ def a_game(stage):
         twilio_resp = MessagingResponse()
         resp = make_response(str(twilio_resp))
         resp.set_cookie(Cookies.STAGE, str(7))
+        resp.set_cookie(Cookies.NAME, name)
         return resp
     if stage == 7 or stage == 8:
         response = request.form['Body'].strip()
         twilio_resp = MessagingResponse()
         if response.lower() == 'yes':
-            message = 'Great! We’ll send you more like this.'
+            message = f'Great! We will send more like this for you and {name}.'
         else:
-            message = 'Sorry to hear it! Maybe {} will like the next one better'.format(name)
+            message = f'Sorry to hear it! Maybe {name} will like the next one better'
 
         return b_game(8, to_num, from_num, name)
 
 def b_game(stage, to_num='', from_num='', name='', time=0):
     now = datetime.now().strftime('%A, %B %dth')
-    if stage == 8:
-        sleep(time)
-        message = 'It’s {}. Time for today’s game! Today, we’ll do 1-2-3 Jump, which is great for children like {}. Text “OK” to get started'.format(now, name)
-        twilio_resp = MessagingResponse()
-        twilio_resp.message(message)
-
-        resp =  make_response(str(twilio_resp))
-        resp.set_cookie(Cookies.STAGE, str(9))
-        return resp
     name = request.cookies.get(Cookies.NAME)
     from_num = request.form['To']
     to_num = request.form['From']
-    if stage == 9:
-        message1 = 'This one is simple, but teaches executive function. Watch this video and give it a try!'
+    response = request.form['Body']
+    if stage == 8 or stage == 9:
+        if response.lower() == 'yes':
+            resp_message = 'Great! We’ll send you more like this.'
+        else:
+            resp_message = f'Sorry to hear it! Maybe {name} will like the next one better'
+        client.messages.create(
+            to=to_num,
+            from_=from_num,
+            body=resp_message,
+        )
+
+        message1 = f'It’s {now}. Time for today’s activity, 123 Jump. WATCH: http://bit.ly/link2'
         client.messages.create(
             to=to_num,
             from_=from_num,
@@ -379,20 +374,13 @@ def e_game(stage, to_num='', from_num='', name='', time=0):
 def end():
     from_num = request.form['To']
     to_num = request.form['From']
-    message1 = 'Thanks for trying this demonstration of Sesame Seeds, powered by Vroom. To learn more about this groundbreaking intervention, visit sesameworkshop.org/refugee.”'
-    message2 = 'To learn more about Vroom, visit joinvroom.org. To get a look at our design process, check out [Parenting in Displacement]'
-    message3 = 'You won’t receive any further messages from us.'
+    message1 = 'Thanks for trying this demo, powered by Vroom. To learn more about Vroom and our design process, visit http://bit.ly/link3. To learn more about Sesame Seeds, visit http://sesameworkshop.org/refugees.'
+    message3 = 'You won’t receive any further messages from us. Text SESAME to restart.'
 
     client.messages.create(
         to=to_num,
         from_=from_num,
         body=message1,
-    )
-    sleep(1.5)
-    client.messages.create(
-        to=to_num,
-        from_=from_num,
-        body=message2,
     )
     sleep(1.5)
     twilio_resp = MessagingResponse()
