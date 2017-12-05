@@ -13,7 +13,7 @@ from twilio.rest import Client
 
 account_sid = os.environ.get('TWILIO_SID')
 auth_token = os.environ.get('TWILIO_AUTH')
-STATUS_URL = 'http://4bd5b984.ngrok.io/checkgame'
+STATUS_URL = 'https://glacial-hollows-80092.herokuapp.com/checkgame'
 
 client = Client(account_sid, auth_token)
 
@@ -106,28 +106,9 @@ def sms():
 
 
 def first_time_response():
-    message1 = 'Welcome to  Sesame Seeds, powered by Vroom.'
-    message2 = 'This is a proof-of-concept demonstration to show the kinds of experiences families will share in Jordan, Lebanon, Iraq and Syria. We are not collecting any data and you can opt-out of messages at any time by texting `STOP`.'
-    message3 = 'In this demo, you will play the part of a caregiver of a child under the age of 6. Respond OK when ready.'
-    from_num = request.form['To']
-    to_num = request.form['From']
-
-    client.messages.create(
-        to=to_num,
-        from_=from_num,
-        body=message1,
-    )
-    sleep(1.5)
-
+    message = 'Welcome to the Sesame Seeds Home proof-of-concept. Text “STOP” at any time. Text “OK” to begin.'
     twilio_resp = MessagingResponse()
-    client.messages.create(
-        to=to_num,
-        from_=from_num,
-        body=message2,
-    )
-    sleep(1.5)
-
-    twilio_resp.message(message3)
+    twilio_resp.message(message)
 
     resp = make_response(str(twilio_resp))
     resp.set_cookie(Cookies.FIRST_TIME, str(False))
@@ -140,20 +121,9 @@ def opt_in():
     if user_response not in ['ok', 'yes']:
         return end()
 
-    message1 = 'اَلسَّلَامُ عَلَيْكُ!\n You have what it takes to nurture a young child’s brain.'
-    message2 = 'Let’s get started. First, what’s your child’s name?'
-
-    from_num = request.form['To']
-    to_num = request.form['From']
-    client.messages.create(
-        to=to_num,
-        from_=from_num,
-        body=message1,
-    )
-    sleep(1.5)
-
+    message = 'Assalamualaikum! Let’s get started: what is your child’s name?'
     twilio_resp = MessagingResponse()
-    twilio_resp.message(message2)
+    twilio_resp.message(message)
 
     resp = make_response(str(twilio_resp))
     resp.set_cookie(Cookies.STAGE, str(5))
@@ -288,7 +258,7 @@ def a_game(stage):
             return resp
 
         name = request.cookies.get(Cookies.NAME)
-        message1 = 'Hiding games are fun for all ages. For babies, briefly hide your face behind your hands or a cloth.  WATCH: http://bit.ly/link1'
+        message1 = 'Hiding games are fun for all ages. For babies, briefly hide your face behind your hands or a cloth.  WATCH how Tonton plays: http://bit.ly/link1'
         client.messages.create(
             to=to_num,
             from_=from_num,
@@ -396,7 +366,7 @@ def e_game(stage, to_num='', from_num='', name='', time=0):
             client.calls.create(
                 to=to_num,
                 from_=from_num,
-                url="http://demo.twilio.com/docs/voice.xml" # TODO: Change this
+                url="https://glacial-hollows-80092.herokuapp.com/soundsgame.xml" # TODO: Change this
             )
 
             return end()
