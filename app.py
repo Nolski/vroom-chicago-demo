@@ -250,7 +250,7 @@ def a_game(stage):
     if stage == 5 or stage == 6: # Confirm start
         name = request.form['Body'].strip()
         now = datetime.now().strftime('%A, %B %dth')
-        message1 = f'It’s {now}. Time for today’s activity! Hiding games are fun for all ages. For babies, briefly hide your face behind your hands or a cloth.  WATCH how Tonton plays: http://bit.ly/link1'
+        message1 = f'It’s {now}. Time for today’s activity! Hiding games are fun for all ages. For babies, briefly hide your face behind your hands or a cloth.  WATCH how Tonton plays: http://bit.ly/2koa0Hj'
         client.messages.create(
             to=to_num,
             from_=from_num,
@@ -297,7 +297,7 @@ def b_game(stage, to_num='', from_num='', name='', time=0):
             body=resp_message,
         )
 
-        message1 = f'It’s {now}. Time for today’s activity, 123 Jump. WATCH: http://bit.ly/link2'
+        message1 = f'It’s {now}. Time for today’s activity, 123 Jump. WATCH: http://bit.ly/2BBp2Ng'
         client.messages.create(
             to=to_num,
             from_=from_num,
