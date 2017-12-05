@@ -13,7 +13,7 @@ from twilio.rest import Client
 
 account_sid = os.environ.get('TWILIO_SID')
 auth_token = os.environ.get('TWILIO_AUTH')
-STATUS_URL = 'http://9bee421b.ngrok.io/checkgame'
+STATUS_URL = 'https://glacial-hollows-80092.herokuapp.com/checkgame'
 
 client = Client(account_sid, auth_token)
 
