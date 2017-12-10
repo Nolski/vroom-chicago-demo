@@ -37,7 +37,7 @@ app = Flask(__name__)
 @app.route('/soundsgame.xml', methods=['GET', 'POST'])
 def soundsgame_xml():
     response = VoiceResponse()
-    response.play('https://vroom-chicago-demo.s3.amazonaws.com/soundsgame.mp3')
+    response.play('https://vroom-chicago-demo.s3.amazonaws.com/shams.mp3')
     return Response(str(response), mimetype='text/xml')
 
 @app.route('/checkgame', methods=['GET', 'POST'])
@@ -121,7 +121,7 @@ def opt_in():
     if user_response not in ['ok', 'yes']:
         return end()
 
-    message = 'Assalamualaikum! Let’s get started: what is your child’s name?'
+    message = 'Marhaba! Let’s get started: what is your child’s name?'
     twilio_resp = MessagingResponse()
     twilio_resp.message(message)
 
@@ -345,7 +345,7 @@ def c_game(stage, to_num='', from_num='', name='', time=0):
 def e_game(stage, to_num='', from_num='', name='', time=0):
     if stage == 14:
         sleep(time)
-        message = 'It’s bedtime! Tonton has a new lullaby for {}. Want her to call now? Text ‘YES’ or ’NO’.”'.format(name)
+        message = 'It’s bedtime! Shams has a bedtime message for {}. Want her to call now? Text ‘YES’ or ’NO’.”'.format(name)
         client.messages.create(
             to=to_num,
             from_=from_num,
