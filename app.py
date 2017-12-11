@@ -374,7 +374,7 @@ def e_game(stage, to_num='', from_num='', name='', time=0):
 def end():
     from_num = request.form['To']
     to_num = request.form['From']
-    message1 = 'Thanks for trying this demo, powered by Vroom. To learn more about Vroom and our design process, visit http://bit.ly/link3. To learn more about Sesame Seeds, visit http://sesameworkshop.org/refugees.'
+    message1 = 'Thanks for trying this demo, powered by Vroom. To learn more about Vroom and our design process, visit http://bit.ly/2BzKXo1. To learn more about Sesame Seeds, visit http://sesameworkshop.org/refugees.'
     message3 = 'You won’t receive any further messages from us. Text SESAME to restart.'
 
     client.messages.create(
