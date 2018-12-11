@@ -29,7 +29,7 @@ PySocks==1.6.7
 python-dateutil==2.6.1
 pytz==2017.3
 redis==2.10.6
-requests==2.18.4
+requests==2.20.0
 rq==0.8.0
 rq-scheduler==0.7.0
 simplegeneric==0.8.1
